@@ -4,10 +4,14 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.view.*;
 import android.widget.*;
+
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.*;
+
 import java.util.*;
+
 import com.spacecolony.backend.*;
 
 public class MissionFragment extends Fragment {
@@ -22,7 +26,7 @@ public class MissionFragment extends Fragment {
     private Button btnAttack, btnDefend;
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
         View view = inflater.inflate(R.layout.fragment_mission, container, false);
 
@@ -67,7 +71,7 @@ public class MissionFragment extends Fragment {
         btnAttack.setEnabled(false);
         btnDefend.setEnabled(false);
 
-        // ROUND 1
+
         handler.postDelayed(() -> {
 
             int dmg1 = calculateDamage(c1);
@@ -83,7 +87,7 @@ public class MissionFragment extends Fragment {
 
         }, 500);
 
-        // ROUND 2
+
         handler.postDelayed(() -> {
 
             if (threatHP > 0) {
@@ -101,7 +105,7 @@ public class MissionFragment extends Fragment {
 
         }, 1500);
 
-        // ROUND 3 + RESULT
+
         handler.postDelayed(() -> {
 
             if (threatHP > 0) {
@@ -115,9 +119,12 @@ public class MissionFragment extends Fragment {
                 battleLog.append(c2.getName()).append(" hits ").append(dmg2).append("\n\n");
             }
 
+
             if (threatHP <= 0) {
 
                 battleLog.append("MISSION SUCCESS!\n");
+                battleLog.append("XP +5 each\n");
+                battleLog.append("Morale +15\n");
 
                 manager.incrementCompletedMissions();
 
@@ -130,8 +137,13 @@ public class MissionFragment extends Fragment {
             } else {
 
                 battleLog.append("MISSION FAILED!\n");
+                battleLog.append("One crew lost!\n");
+                battleLog.append("Morale -20\n");
 
-                manager.removeCrewMember(c1.getId());
+                // Remove first crew safely
+                if (c1 != null) {
+                    manager.removeCrewMember(c1.getId());
+                }
 
                 for (CrewMember m : crew) {
                     m.updateMorale(-20);
@@ -148,21 +160,24 @@ public class MissionFragment extends Fragment {
         }, 2500);
     }
 
+
     private int calculateDamage(CrewMember c) {
 
         int base = c.getSkill() + (int)(Math.random() * 3);
 
-        // Morale effects
+
         if (c.getMorale() > 75 && Math.random() < 0.2) {
-            return base * 2; // critical hit
+            return base * 2;
         }
 
+        // Low morale → hesitation
         if (c.getMorale() < 40 && Math.random() < 0.1) {
-            return 0; // hesitation
+            return 0;
         }
 
         return base;
     }
+
 
     private List<CrewMember> getCrew() {
         List<CrewMember> list = new ArrayList<>();
