@@ -12,9 +12,18 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         loadFragment(new QuartersFragment());
+
+        findViewById(R.id.navQuarters).setOnClickListener(v ->
+                loadFragment(new QuartersFragment()));
+
+        findViewById(R.id.navSimulator).setOnClickListener(v ->
+                loadFragment(new SimulatorFragment()));
+
+        findViewById(R.id.navMission).setOnClickListener(v ->
+                loadFragment(new MissionFragment()));
     }
 
-    private void loadFragment(Fragment f) {
+    public void loadFragment(Fragment f) {
         getSupportFragmentManager()
                 .beginTransaction()
                 .replace(R.id.container, f)

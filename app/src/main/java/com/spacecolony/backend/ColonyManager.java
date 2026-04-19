@@ -47,7 +47,7 @@ public class ColonyManager {
                 throw new IllegalArgumentException("Unknown role: " + role);
         }
 
-        addCrewMember(member, Station.MISSION_CONTROL);
+        addCrewMember(member, Station.QUARTERS);
         return member;
     }
 

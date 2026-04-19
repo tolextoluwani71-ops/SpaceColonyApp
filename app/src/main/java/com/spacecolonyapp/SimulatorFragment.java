@@ -2,15 +2,11 @@ package com.spacecolonyapp;
 
 import android.os.Bundle;
 import android.view.*;
-import android.widget.Button;
-
+import android.widget.*;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
+import androidx.recyclerview.widget.*;
 import java.util.*;
-
 import com.spacecolony.backend.*;
 
 public class SimulatorFragment extends Fragment {
@@ -26,11 +22,11 @@ public class SimulatorFragment extends Fragment {
         RecyclerView rv = view.findViewById(R.id.recyclerView);
         Button train = view.findViewById(R.id.btnTrain);
         Button back = view.findViewById(R.id.btnBack);
+        Button mission = view.findViewById(R.id.btnMission);
 
-        GameStateViewModel vm = new ViewModelProvider(requireActivity())
-                .get(GameStateViewModel.class);
-
-        manager = vm.getColonyManager();
+        manager = new ViewModelProvider(requireActivity())
+                .get(GameStateViewModel.class)
+                .getColonyManager();
 
         adapter = new CrewAdapter();
         rv.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -38,17 +34,55 @@ public class SimulatorFragment extends Fragment {
 
         refresh();
 
-
+        // TRAIN
         train.setOnClickListener(v -> {
+            CrewMember c = adapter.getSelected();
 
+            if (c == null) {
+                Toast.makeText(getContext(), "Select a crew first!", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            manager.trainInSimulator(c.getId());
+
+            Toast.makeText(getContext(), "Crew trained!", Toast.LENGTH_SHORT).show();
+
+            adapter.clearSelection();
+            refresh();
         });
 
+        // BACK TO QUARTERS
         back.setOnClickListener(v -> {
-            CrewMember selected = adapter.getSelected();
-            if (selected != null) {
-                manager.moveCrew(selected.getId(), Station.QUARTERS);
-                refresh();
+            CrewMember c = adapter.getSelected();
+
+            if (c == null) {
+                Toast.makeText(getContext(), "Select a crew first!", Toast.LENGTH_SHORT).show();
+                return;
             }
+
+            manager.moveCrew(c.getId(), Station.QUARTERS);
+
+            Toast.makeText(getContext(), "Moved to Quarters!", Toast.LENGTH_SHORT).show();
+
+            adapter.clearSelection();
+            refresh();
+        });
+
+        // 🔥 MOVE TO MISSION CONTROL (FIX)
+        mission.setOnClickListener(v -> {
+            CrewMember c = adapter.getSelected();
+
+            if (c == null) {
+                Toast.makeText(getContext(), "Select a crew first!", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            manager.moveCrew(c.getId(), Station.MISSION_CONTROL);
+
+            Toast.makeText(getContext(), "Moved to Mission!", Toast.LENGTH_SHORT).show();
+
+            adapter.clearSelection();
+            refresh();
         });
 
         return view;

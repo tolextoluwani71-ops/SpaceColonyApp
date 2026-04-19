@@ -3,6 +3,7 @@ package com.spacecolonyapp;
 import android.graphics.Color;
 import android.view.*;
 import android.widget.TextView;
+import android.widget.ProgressBar;
 
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -17,7 +18,6 @@ public class CrewAdapter extends RecyclerView.Adapter<CrewAdapter.ViewHolder> {
 
     public void setData(List<CrewMember> list) {
         data = list;
-        selected = null; // reset selection when data changes
         notifyDataSetChanged();
     }
 
@@ -25,10 +25,15 @@ public class CrewAdapter extends RecyclerView.Adapter<CrewAdapter.ViewHolder> {
         return selected;
     }
 
+    public void clearSelection() {
+        selected = null;
+        notifyDataSetChanged();
+    }
+
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View v = LayoutInflater.from(parent.getContext())
-                .inflate(android.R.layout.simple_list_item_2, parent, false);
+                .inflate(R.layout.item_crew, parent, false); // 🔥 custom layout
         return new ViewHolder(v);
     }
 
@@ -36,20 +41,24 @@ public class CrewAdapter extends RecyclerView.Adapter<CrewAdapter.ViewHolder> {
     public void onBindViewHolder(ViewHolder holder, int position) {
         CrewMember m = data.get(position);
 
-        holder.name.setText(m.getName());
-        holder.stats.setText("Energy: " + m.getEnergy() + " XP: " + m.getExperience());
+        // NAME
+        holder.name.setText(m.getClass().getSimpleName() + ": " + m.getName());
 
+        // BARS
+        holder.energyBar.setProgress(m.getEnergy());
+        holder.moraleBar.setProgress(m.getMorale());
 
+        // SELECTION EFFECT
         if (m == selected) {
-            holder.itemView.setBackgroundColor(Color.LTGRAY);
+            holder.itemView.setBackgroundColor(Color.parseColor("#334155"));
         } else {
             holder.itemView.setBackgroundColor(Color.TRANSPARENT);
         }
 
-
+        // CLICK
         holder.itemView.setOnClickListener(v -> {
             selected = m;
-            notifyDataSetChanged(); // refresh UI
+            notifyDataSetChanged();
         });
     }
 
@@ -59,12 +68,16 @@ public class CrewAdapter extends RecyclerView.Adapter<CrewAdapter.ViewHolder> {
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView name, stats;
+
+        TextView name;
+        ProgressBar energyBar, moraleBar;
 
         ViewHolder(View itemView) {
             super(itemView);
-            name = itemView.findViewById(android.R.id.text1);
-            stats = itemView.findViewById(android.R.id.text2);
+
+            name = itemView.findViewById(R.id.name);
+            energyBar = itemView.findViewById(R.id.energyBar);
+            moraleBar = itemView.findViewById(R.id.moraleBar);
         }
     }
 }

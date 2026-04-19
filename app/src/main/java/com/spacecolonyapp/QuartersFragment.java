@@ -2,15 +2,11 @@ package com.spacecolonyapp;
 
 import android.os.Bundle;
 import android.view.*;
-import android.widget.Button;
-
+import android.widget.*;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
+import androidx.recyclerview.widget.*;
 import java.util.*;
-
 import com.spacecolony.backend.*;
 
 public class QuartersFragment extends Fragment {
@@ -27,10 +23,9 @@ public class QuartersFragment extends Fragment {
         Button recruit = view.findViewById(R.id.btnRecruit);
         Button move = view.findViewById(R.id.btnMove);
 
-        GameStateViewModel vm = new ViewModelProvider(requireActivity())
-                .get(GameStateViewModel.class);
-
-        manager = vm.getColonyManager();
+        manager = new ViewModelProvider(requireActivity())
+                .get(GameStateViewModel.class)
+                .getColonyManager();
 
         adapter = new CrewAdapter();
         rv.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -39,16 +34,19 @@ public class QuartersFragment extends Fragment {
         refresh();
 
         recruit.setOnClickListener(v -> {
-            manager.createCrewMember("pilot", "Crew" + System.currentTimeMillis());
+            String[] roles = {"pilot","engineer","medic","scientist","soldier"};
+            String role = roles[new Random().nextInt(roles.length)];
+            manager.createCrewMember(role, role + "_" + System.currentTimeMillis());
             refresh();
         });
 
         move.setOnClickListener(v -> {
             CrewMember c = adapter.getSelected();
-            if (c != null) {
-                manager.moveCrew(c.getId(), Station.SIMULATOR);
-                refresh();
-            }
+            if (c == null) return;
+
+            manager.moveCrew(c.getId(), Station.SIMULATOR);
+            adapter.clearSelection();
+            refresh();
         });
 
         return view;
@@ -56,13 +54,11 @@ public class QuartersFragment extends Fragment {
 
     private void refresh() {
         List<CrewMember> list = new ArrayList<>();
-
         for (CrewMember m : manager.getCrewList()) {
             if (manager.getCrewStation(m.getId()) == Station.QUARTERS) {
                 list.add(m);
             }
         }
-
         adapter.setData(list);
     }
 }
