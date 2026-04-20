@@ -1,7 +1,6 @@
 package com.spacecolonyapp;
 
 import android.os.Bundle;
-import android.os.Handler;
 import android.view.*;
 import android.widget.*;
 
@@ -19,9 +18,6 @@ public class MissionFragment extends Fragment {
     private ColonyManager manager;
     private CrewAdapter adapter;
     private TextView log;
-
-    private CrewMember c1, c2;
-    private int threatHP;
 
     private Button btnAttack, btnDefend;
 
@@ -45,13 +41,13 @@ public class MissionFragment extends Fragment {
 
         refresh();
 
-        btnAttack.setOnClickListener(v -> startBattle("ATTACK"));
-        btnDefend.setOnClickListener(v -> startBattle("DEFEND"));
+        btnAttack.setOnClickListener(v -> startBattle());
+        btnDefend.setOnClickListener(v -> startBattle());
 
         return view;
     }
 
-    private void startBattle(String action) {
+    private void startBattle() {
 
         List<CrewMember> crew = getCrew();
 
@@ -60,124 +56,34 @@ public class MissionFragment extends Fragment {
             return;
         }
 
-        c1 = crew.get(0);
-        c2 = crew.get(1);
+        CrewMember c1 = crew.get(0);
+        CrewMember c2 = crew.get(1);
 
-        threatHP = 20 + manager.getCompletedMissions() * 2;
+        Mission mission = new Mission(
+                manager,
+                "frontline assault",
+                new SimpleActionSelector()
+        );
 
-        StringBuilder battleLog = new StringBuilder();
-        Handler handler = new Handler();
+        MissionResult result = mission.runMission(c1.getId(), c2.getId());
 
-        btnAttack.setEnabled(false);
-        btnDefend.setEnabled(false);
+        StringBuilder output = new StringBuilder();
 
-
-        handler.postDelayed(() -> {
-
-            int dmg1 = calculateDamage(c1);
-            int dmg2 = calculateDamage(c2);
-
-            threatHP -= (dmg1 + dmg2);
-
-            battleLog.append("Round 1\n");
-            battleLog.append(c1.getName()).append(" hits ").append(dmg1).append("\n");
-            battleLog.append(c2.getName()).append(" hits ").append(dmg2).append("\n\n");
-
-            log.setText(battleLog.toString());
-
-        }, 500);
-
-
-        handler.postDelayed(() -> {
-
-            if (threatHP > 0) {
-                int dmg1 = calculateDamage(c1);
-                int dmg2 = calculateDamage(c2);
-
-                threatHP -= (dmg1 + dmg2);
-
-                battleLog.append("Round 2\n");
-                battleLog.append(c1.getName()).append(" hits ").append(dmg1).append("\n");
-                battleLog.append(c2.getName()).append(" hits ").append(dmg2).append("\n\n");
-
-                log.setText(battleLog.toString());
-            }
-
-        }, 1500);
-
-
-        handler.postDelayed(() -> {
-
-            if (threatHP > 0) {
-                int dmg1 = calculateDamage(c1);
-                int dmg2 = calculateDamage(c2);
-
-                threatHP -= (dmg1 + dmg2);
-
-                battleLog.append("Round 3\n");
-                battleLog.append(c1.getName()).append(" hits ").append(dmg1).append("\n");
-                battleLog.append(c2.getName()).append(" hits ").append(dmg2).append("\n\n");
-            }
-
-
-            if (threatHP <= 0) {
-
-                battleLog.append("MISSION SUCCESS!\n");
-                battleLog.append("XP +5 each\n");
-                battleLog.append("Morale +15\n");
-
-                manager.incrementCompletedMissions();
-
-                for (CrewMember m : crew) {
-                    m.gainExperience(5);
-                    m.updateMorale(15);
-                    manager.moveCrew(m.getId(), Station.QUARTERS);
-                }
-
-            } else {
-
-                battleLog.append("MISSION FAILED!\n");
-                battleLog.append("One crew lost!\n");
-                battleLog.append("Morale -20\n");
-
-                // Remove first crew safely
-                if (c1 != null) {
-                    manager.removeCrewMember(c1.getId());
-                }
-
-                for (CrewMember m : crew) {
-                    m.updateMorale(-20);
-                }
-            }
-
-            log.setText(battleLog.toString());
-
-            btnAttack.setEnabled(true);
-            btnDefend.setEnabled(true);
-
-            refresh();
-
-        }, 2500);
-    }
-
-
-    private int calculateDamage(CrewMember c) {
-
-        int base = c.getSkill() + (int)(Math.random() * 3);
-
-
-        if (c.getMorale() > 75 && Math.random() < 0.2) {
-            return base * 2;
+        
+        for (String line : result.getBattleLog()) {
+            output.append(line).append("\n");
         }
 
-        // Low morale → hesitation
-        if (c.getMorale() < 40 && Math.random() < 0.1) {
-            return 0;
+        if (result.isVictory()) {
+            output.append("\nMISSION SUCCESS!");
+        } else {
+            output.append("\nMISSION FAILED!");
         }
 
-        return base;
-    }
+        log.setText(output.toString());
 
+        refresh();
+    }
 
     private List<CrewMember> getCrew() {
         List<CrewMember> list = new ArrayList<>();
